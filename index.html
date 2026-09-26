@@ -259,7 +259,28 @@
     <fieldset id="potluckFieldset">
       <legend>Potluck item(s) you're bringing <span class="req">*</span></legend>
       <div id="potluckList"></div>
+      <div class="field" id="sideDishNameField" style="display:none;">
+        <label for="sideDishName">What side dish are you bringing? <span class="req">*</span></label>
+        <input type="text" id="sideDishName" name="sideDishName" placeholder="e.g. Mac and cheese">
+      </div>
       <div class="hint">Only items still needed are shown below.</div>
+    </fieldset>
+
+    <fieldset id="volunteerFieldset">
+      <legend>Interested in volunteering? (optional)</legend>
+      <div class="checkbox-row">
+        <label><input type="checkbox" name="volunteer" value="Setup crew (tables, chairs, decorations)"><span>Setup crew (tables, chairs, decorations)</span></label>
+      </div>
+      <div class="checkbox-row">
+        <label><input type="checkbox" name="volunteer" value="Potluck transport (drive items from church to park)"><span>Potluck transport (drive items from church to park)</span></label>
+      </div>
+      <div class="checkbox-row">
+        <label><input type="checkbox" name="volunteer" value="Kids' games supervisor"><span>Kids' games setup</span></label>
+      </div>
+      <div class="checkbox-row">
+        <label><input type="checkbox" name="volunteer" value="Teardown crew"><span>Teardown crew</span></label>
+      </div>
+      <div class="hint">Pick as many as you'd like to help with — no limit on any role.</div>
     </fieldset>
 
     <button type="submit" id="submitBtn">Submit</button>
@@ -274,24 +295,38 @@
   // It looks like: https://script.google.com/macros/s/AKfycb.../exec
   const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyXeOX6XMTp4xbuWtIh2vm6LDnJJfEvWiJsDFdOJYyD3QDtUR7eD1dN3iEdFBvdcSWXyw/exec";
 
+  // Buns removed: the church is buying both hamburger and hot dog buns,
+  // so they're no longer a potluck ask.
   const CAPS = {
-    "Hot Dog Buns": 13,
-    "Hamburger Buns": 7,
     "Chips": 15,
     "Cookies": 10,
-    "Water": 2,
+    "Water": 5,
     "Soda": 10,
     "Side Dish": 12
   };
   const NO_CAP_ITEM = "Not bringing an item";
 
   const potluckList = document.getElementById('potluckList');
+  const sideDishNameField = document.getElementById('sideDishNameField');
+  const sideDishNameInput = document.getElementById('sideDishName');
   const submitBtn = document.getElementById('submitBtn');
   const loadingNote = document.getElementById('loadingNote');
   const formMessage = document.getElementById('formMessage');
   const form = document.getElementById('signupForm');
 
   let currentCounts = {};
+
+  function updateSideDishVisibility() {
+    const sideDishChecked = Array.from(
+      document.querySelectorAll('input[name="potluck"]:checked')
+    ).some(cb => cb.value === 'Side Dish');
+
+    sideDishNameField.style.display = sideDishChecked ? 'block' : 'none';
+    sideDishNameInput.required = sideDishChecked;
+    if (!sideDishChecked) {
+      sideDishNameInput.value = '';
+    }
+  }
 
   function buildChecklist(counts) {
     potluckList.innerHTML = '';
@@ -325,7 +360,19 @@
 
       potluckList.appendChild(row);
     });
+
+    // Re-attach the Side Dish check every time the list is rebuilt,
+    // since these checkboxes are recreated on load and after submit.
+    updateSideDishVisibility();
   }
+
+  // Event delegation: catches changes on any potluck checkbox, including
+  // ones rebuilt after a submit, without needing to re-bind individually.
+  potluckList.addEventListener('change', function (e) {
+    if (e.target.name === 'potluck') {
+      updateSideDishVisibility();
+    }
+  });
 
   async function loadCounts() {
     try {
@@ -361,13 +408,24 @@
       return;
     }
 
+    if (checked.includes('Side Dish') && !sideDishNameInput.value.trim()) {
+      showMessage('Please tell us what side dish you\'re bringing.', 'error');
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Submit';
+      return;
+    }
+
+    const checkedVolunteer = Array.from(document.querySelectorAll('input[name="volunteer"]:checked')).map(cb => cb.value);
+
     const payload = {
       firstName: document.getElementById('firstName').value.trim(),
       lastName: document.getElementById('lastName').value.trim(),
       phone: document.getElementById('phone').value.trim(),
       adults: document.getElementById('adults').value,
       kids: document.getElementById('kids').value,
-      potluckItems: checked
+      potluckItems: checked,
+      sideDishName: checked.includes('Side Dish') ? sideDishNameInput.value.trim() : '',
+      volunteerRoles: checkedVolunteer
     };
 
     try {
@@ -398,6 +456,7 @@
       } else {
         showMessage('Thanks, ' + payload.firstName + '! Your sign-up is confirmed. See you October 31st!', 'success');
         form.reset();
+        sideDishNameField.style.display = 'none';
       }
 
       submitBtn.textContent = 'Submit';
