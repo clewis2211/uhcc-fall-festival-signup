@@ -257,13 +257,13 @@
     </div>
 
     <fieldset id="potluckFieldset">
+       <div class="hint">Only items still needed are shown below.</div>
       <legend>Potluck item(s) you're bringing <span class="req">*</span></legend>
       <div id="potluckList"></div>
       <div class="field" id="sideDishNameField" style="display:none;">
         <label for="sideDishName">What side dish are you bringing? <span class="req">*</span></label>
         <input type="text" id="sideDishName" name="sideDishName" placeholder="e.g. Mac and cheese">
       </div>
-      <div class="hint">Only items still needed are shown below.</div>
     </fieldset>
 
     <fieldset id="volunteerFieldset">
@@ -298,11 +298,12 @@
   // Buns removed: the church is buying both hamburger and hot dog buns,
   // so they're no longer a potluck ask.
   const CAPS = {
-    "Chips": 15,
-    "Cookies": 10,
-    "Water": 5,
+    "Chips (assorted box only)": 15,
+    "Cookies": 15,
+    "Case of Water": 5,
     "Soda": 10,
-    "Side Dish": 12
+    "Bag of Candy": 40,
+    "Side Dish": 7
   };
   const NO_CAP_ITEM = "Not bringing an item";
 
